@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compare & Decide: Cloud AI/LLM API Providers</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --bg-panel:#11161d;
+    --bg-card:#141a22;
+    --bg-card-hover:#171e27;
+    --border:#232c37;
+    --border-soft:#1b222b;
+    --text:#e8edf3;
+    --text-dim:#9aa7b5;
+    --text-faint:#5f6c7a;
+    --teal:#2dd4bf;
+    --teal-dim:#134e4a;
+    --amber:#f5b942;
+    --amber-dim:#4a3a12;
+    --navy:#1c2a44;
+    --danger:#f2637a;
+    --good:#3ecf8e;
+    --radius:14px;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(45,212,191,0.07), transparent 60%),
+      radial-gradient(1000px 500px at 90% 0%, rgba(245,185,66,0.05), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:0 0 80px 0;
+  }
+  a{color:var(--teal);}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 20px 0;}
+
+  /* HEADER */
+  header.top{padding:8px 0 28px;border-bottom:1px solid var(--border-soft);}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--teal);background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.25);
+    padding:5px 11px;border-radius:999px;margin-bottom:16px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);}
+  h1{font-size:clamp(26px,4vw,38px);margin:0 0 10px;letter-spacing:-0.02em;font-weight:700;}
+  .sub{color:var(--text-dim);font-size:15.5px;max-width:680px;margin:0;}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;}
+  .meta-chip{
+    font-size:12.5px;color:var(--text-dim);background:var(--bg-card);border:1px solid var(--border);
+    padding:6px 12px;border-radius:8px;display:flex;align-items:center;gap:6px;
+  }
+  .meta-chip b{color:var(--text);font-weight:600;}
+
+  /* LOADING */
+  #loadingState{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:90px 20px;gap:16px;color:var(--text-dim);
+  }
+  .spinner{
+    width:34px;height:34px;border-radius:50%;
+    border:3px solid var(--border);border-top-color:var(--teal);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  #app{display:none;}
+  #app.ready{display:block;}
+
+  section{margin-top:34px;}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .section-title{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);}
+  .section-hint{font-size:12.5px;color:var(--text-faint);}
+
+  /* WEIGHT CONTROLS */
+  .weights-panel{
+    background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:22px 22px 8px;
+  }
+  .weight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px 28px;}
+  .weight-item{padding-bottom:18px;}
+  .weight-label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .weight-label{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .weight-icon{font-size:15px;}
+  .weight-value{font-family:var(--mono);font-size:13px;color:var(--teal);background:rgba(45,212,191,0.08);padding:2px 9px;border-radius:6px;min-width:42px;text-align:center;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:3px;
+    background:linear-gradient(90deg, var(--teal) 0%, var(--teal) var(--fill,50%), var(--border) var(--fill,50%), var(--border) 100%);
+    outline:none;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:17px;height:17px;border-radius:50%;
+    background:#fff;border:3px solid var(--teal);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4);
+    margin-top:0;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:17px;height:17px;border-radius:50%;background:#fff;border:3px solid var(--teal);cursor:pointer;
+  }
+  .weight-desc{font-size:12px;color:var(--text-faint);margin-top:7px;}
+  .weights-footer{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    padding:14px 0 16px;border-top:1px solid var(--border-soft);margin-top:6px;
+  }
+  .weight-total{font-size:12.5px;color:var(--text-dim);font-family:var(--mono);}
+  .weight-total.balanced{color:var(--good);}
+  .btn{
+    font-family:var(--sans);font-size:13px;font-weight:600;color:var(--text);
+    background:var(--bg-card);border:1px solid var(--border);padding:8px 16px;border-radius:8px;
+    cursor:pointer;transition:all .15s ease;
+  }
+  .btn:hover{background:var(--bg-card-hover);border-color:var(--teal);}
+  .btn.primary{background:var(--teal);color:#04211d;border-color:var(--teal);}
+  .btn.primary:hover{background:#3fe0ca;}
+  .preset-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  /* RANKING */
+  .rank-list{display:flex;flex-direction:column;gap:12px;}
+  .rank-card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;display:flex;flex-direction:column;gap:14px;
+    transition:border-color .2s ease, transform .2s ease;
+    position:relative;overflow:hidden;
+  }
+  .rank-card.top{border-color:rgba(45,212,191,0.45);box-shadow:0 0 0 1px rgba(45,212,191,0.12), 0 8px 24px -12px rgba(45,212,191,0.25);}
+  .rank-card.top::before{
+    content:"BEST VALUE MATCH";
+    position:absolute;top:0;right:0;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;
+    background:var(--teal);color:#04211d;padding:4px 10px;border-bottom-left-radius:8px;font-weight:700;
+  }
+  .rank-main{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .rank-num{
+    font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text-faint);
+    width:34px;flex-shrink:0;
+  }
+  .rank-card.top .rank-num{color:var(--teal);}
+  .provider-badge{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0;color:#0b0f14;}
+  .provider-info{flex:1;min-width:180px;}
+  .provider-name{font-size:16.5px;font-weight:700;}
+  .provider-model{font-size:12.5px;color:var(--text-dim);font-family:var(--mono);}
+  .score-block{text-align:right;min-width:96px;}
+  .score-num{font-size:24px;font-weight:800;font-family:var(--mono);}
+  .score-label{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+  .score-bar-track{height:6px;border-radius:4px;background:var(--border-soft);overflow:hidden;margin-top:6px;}
+  .score-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),#5eead4);transition:width .4s ease;}
+
+  .criteria-breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding-top:12px;border-top:1px solid var(--border-soft);}
+  .crit-mini{background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:10px 12px;}
+  .crit-mini-label{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;display:flex;justify-content:space-between;}
+  .crit-mini-val{font-size:13px;font-weight:600;color:var(--text);}
+  .crit-mini-sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .flag{
+    display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;
+    color:var(--amber);background:rgba(245,185,66,0.1);border:1px solid rgba(245,185,66,0.3);
+    padding:1px 6px;border-radius:5px;margin-top:5px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state{
+    text-align:center;padding:50px 20px;color:var(--text-dim);
+    background:var(--bg-card);border:1px dashed var(--border);border-radius:var(--radius);
+  }
+  .empty-state .big{font-size:34px;margin-bottom:10px;}
+
+  /* COLLAPSIBLES */
+  .collapsible{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .collapsible-head{
+    display:flex;align-items:center;justify-content:space-between;padding:18px 22px;cursor:pointer;
+    user-select:none;
+  }
+  .collapsible-head:hover{background:var(--bg-card-hover);}
+  .collapsible-title{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:10px;}
+  .collapsible-chevron{font-size:13px;color:var(--text-dim);transition:transform .2s ease;}
+  .collapsible.open .collapsible-chevron{transform:rotate(180deg);}
+  .collapsible-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .collapsible.open .collapsible-body{max-height:4000px;}
+  .collapsible-body-inner{padding:0 22px 22px;border-top:1px solid var(--border-soft);}
+
+  /* SOURCES */
+  .source-group{margin-top:18px;}
+  .source-group h4{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);margin:0 0 10px;}
+  .source-item{
+    display:flex;justify-content:space-between;gap:12px;padding:10px 0;
+    border-bottom:1px solid var(--border-soft);font-size:13px;
+  }
+  .source-item:last-child{border-bottom:none;}
+  .source-name{color:var(--text);}
+  .source-desc{color:var(--text-faint);font-size:11.5px;margin-top:2px;}
+  .source-link{color:var(--teal);text-decoration:none;font-size:12px;white-space:nowrap;flex-shrink:0;}
+  .source-link:hover{text-decoration:underline;}
+
+  /* RESEARCH NOTES */
+  .research-note{padding:16px 0;border-bottom:1px solid var(--border-soft);}
+  .research-note:last-child{border-bottom:none;}
+  .research-note h5{font-size:13.5px;margin:0 0 6px;color:var(--text);}
+  .research-note p{font-size:13px;color:var(--text-dim);margin:0;}
+  .conflict-tag{
+    display:inline-block;font-size:10px;font-weight:700;color:var(--danger);
+    background:rgba(242,99,122,0.1);border:1px solid rgba(242,99,122,0.3);
+    padding:1px 7px;border-radius:5px;margin-bottom:8px;
+  }
+
+  /* TABLE VIEW */
+  .table-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
+  th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--border-soft);}
+  th{background:var(--bg-panel);color:var(--text-dim);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+  tr:last-child td{border-bottom:none;}
+  td.provider-cell{font-weight:700;}
+  .est-badge{color:var(--amber);font-size:10.5px;font-weight:700;}
+
+  footer.disclaimer{
+    margin-top:40px;padding:18px 22px;border-radius:var(--radius);
+    background:rgba(245,185,66,0.05);border:1px solid rgba(245,185,66,0.2);
+    font-size:12.5px;color:var(--text-dim);
+  }
+  footer.disclaimer b{color:var(--amber);}
+
+  @media (max-width:640px){
+    .rank-main{gap:10px;}
+    .score-block{text-align:left;width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingState">
+  <div class="spinner"></div>
+  <div>Loading provider data and sources…</div>
+</div>
+
+<div id="app">
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow"><span class="dot"></span> Compare &amp; Decide · Cloud AI/LLM APIs</div>
+    <h1>Which LLM API gives you the best value?</h1>
+    <p class="sub">Built for indie developers and students choosing between Anthropic, OpenAI, Google, and Mistral for a side project. Adjust the sliders below to match what actually matters to you — the ranking recalculates live.</p>
+    <div class="meta-row">
+      <div class="meta-chip">🔎 <b>4 providers</b> compared</div>
+      <div class="meta-chip">📊 <b>4 criteria</b>, all sourced</div>
+      <div class="meta-chip">🕒 Data verified <b>Aug 14, 2026</b></div>
+      <div class="meta-chip">⚠️ <b>1</b> derived/estimated field flagged</div>
+    </div>
+  </header>
+
+  <section id="weightsSection">
+    <div class="section-head">
+      <div class="section-title">Step 1 — Set your priorities</div>
+      <div class="section-hint">Weights are relative to each other, not absolute — 0 means "ignore this criterion entirely."</div>
+    </div>
+    <div class="weights-panel">
+      <div class="weight-grid" id="weightGrid"></div>
+      <div class="weights-footer">
+        <div class="weight-total" id="weightTotal">Total weight: —</div>
+        <div class="preset-row">
+          <button class="btn" data-preset="cheapest">💸 Cheapest first</button>
+          <button class="btn" data-preset="smartest">🧠 Smartest first</button>
+          <button class="btn" data-preset="balanced">⚖️ Balanced</button>
+          <button class="btn primary" data-preset="reset">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="rankingSection">
+    <div class="section-head">
+      <div class="section-title">Step 2 — Your live-ranked result</div>
+      <div class="section-hint" id="rankingHint"></div>
+    </div>
+    <div id="rankingOutput"></div>
+  </section>
+
+  <section id="tableSection">
+    <div class="section-head">
+      <div class="section-title">Raw comparison data</div>
+      <div class="section-hint">Every number below links to its source in the panel underneath.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Flagship / value model</th>
+            <th>Price (in / out per MTok)</th>
+            <th>Context window</th>
+            <th>Benchmark score¹</th>
+            <th>Free tier</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:11.5px;color:var(--text-faint);margin-top:8px;">¹ Artificial Analysis Intelligence Index (v4.1.1), 0–100+ scale, effort/reasoning level noted per model. Scores are not directly comparable across wildly different reasoning-effort settings — see "How this was researched" for caveats.</p>
+  </section>
+
+  <section id="sourcesSection">
+    <div class="collapsible" id="sourcesCollapsible">
+      <div class="collapsible-head" data-toggle="sourcesCollapsible">
+        <div class="collapsible-title">📚 Sources panel — every citation used</div>
+        <div class="collapsible-chevron">▾</div>
+      </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner" id="sourcesBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="researchSection">
+    <div class="collapsible" id="researchCollapsible">
+      <div class="collapsible-head" data-toggle="researchCollapsible">
+        <div class="collapsible-title">🔬 How this was researched</div>
+        <div class="collapsible-chevron">▾</div>
+      </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner" id="researchBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="disclaimer">
+    <b>Note on volatility:</b> LLM API pricing and benchmark scores change fast — sometimes within weeks. All figures here were verified against official provider documentation and Artificial Analysis on August 14, 2026. Before committing spend, re-check the live source links above, especially for OpenAI's Terra/Luna tier (cut twice since July 2026 launch) and Anthropic's Sonnet 5 introductory pricing terms.
+  </footer>
+
+</div>
+</div>
+
+<script>
+/* ============================================================
+   DATA — every numeric field carries its own source citation.
+   isEstimate:true flags anything that is NOT a directly-sourced
+   fact (i.e. an editorial normalization/derived judgment call).
+   ============================================================ */
+
+const PROVIDERS = [
+  {
+    id: 'anthropic',
+    name: 'Anthropic',
+    model: 'Claude Sonnet 5',
+    color: '#d97757',
+    price: {
+      inputRaw: 2.00, outputRaw: 10.00,
+      display: '$2.00 in / $10.00 out',
+      note: 'Standard rate — the previously scheduled Sept 1, 2026 increase to $3/$15 was cancelled and $2/$10 is now permanent.',
+      source: { name: 'Anthropic Platform Docs — Pricing', url: 'https://platform.claude.com/docs/en/about-claude/pricing' }
+    },
+    context: {
+      tokens: 1000000, maxOutput: 128000,
+      display: '1,000,000 tokens',
+      note: '128K max output. 1M is the default and only context size for Sonnet 5 — no beta header needed, billed at standard rates.',
+      source: { name: 'Anthropic — Context windows docs', url: 'https://platform.claude.com/docs/en/build-with-claude/context-windows' }
+    },
+    benchmark: {
+      score: 55, effort: 'Adaptive Reasoning, Max Effort',
+      display: '55',
+      note: 'Ranks #5 overall on the index at time of writing, 2–3 points behind GPT-5.5 (xhigh) and Opus 4.8 (max).',
+      source: { name: 'Artificial Analysis — Claude Sonnet 5 model page', url: 'https://artificialanalysis.ai/models/claude-sonnet-5' }
+    },
+    freeTier: {
+      display: 'No permanent free production API tier',
+      note: 'Claude.ai has a separate free consumer chat plan, but it does not grant general API access or tokens.',
+      score: 10, isEstimate: true,
+      source: { name: 'EvoLink — Claude API Pricing Guide 2026', url: 'https://evolink.ai/blog/claude-api-pricing-guide-2026' }
+    }
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    model: 'GPT-5.6 Terra',
+    color: '#74aa9c',
+    price: {
+      inputRaw: 2.50, outputRaw: 15.00,
+      display: '$2.50 in / $15.00 out',
+      note: 'Official GA launch pricing (Jul 9, 2026). Third-party trackers report OpenAI cut Terra to $2.00/$12.00 on Jul 30, 2026 — not yet independently re-confirmed on OpenAI\u2019s own announcement page at research time, so the launch rate is shown as the primary sourced figure.',
+      source: { name: 'OpenAI — "GPT‑5.6: Frontier intelligence" announcement', url: 'https://openai.com/index/gpt-5-6/' }
+    },
+    context: {
+      tokens: 1050000, maxOutput: 128000,
+      display: '1,050,000 tokens',
+      note: '128K max output. Requests over 272K input tokens are billed at a 2x/1.5x long-context surcharge for the full request.',
+      source: { name: 'OpenAI Developer Docs — GPT-5.6 Sol model card', url: 'https://developers.openai.com/api/docs/models/gpt-5.6-sol' }
+    },
+    benchmark: {
+      score: 50, effort: 'High reasoning effort',
+      display: '50',
+      note: 'Compared directly against Gemini 3.1 Pro Preview on the same Artificial Analysis leaderboard snapshot.',
+      source: { name: 'Artificial Analysis — GPT-5.6 Terra vs Gemini 3.1 Pro comparison', url: 'https://artificialanalysis.ai/models/comparisons/gpt-5-6-terra-high-vs-gemini-3-1-pro-preview' }
+    },
+    freeTier: {
+      display: 'Limited free credits for new accounts only',
+      note: 'No permanent free unlimited tier; beyond starter credits, all usage is billed per token.',
+      score: 30, isEstimate: true,
+      source: { name: 'CloudZero — OpenAI API Pricing in 2026', url: 'https://www.cloudzero.com/blog/openai-pricing/' }
+    }
+  },
+  {
+    id: 'google',
+    name: 'Google',
+    model: 'Gemini 3.1 Pro',
+    color: '#4285f4',
+    price: {
+      inputRaw: 2.00, outputRaw: 12.00,
+      display: '$2.00 in / $12.00 out',
+      note: 'Rate applies up to 200K tokens of context; above that, price rises to $4.00/$18.00 per MTok for the full request.',
+      source: { name: 'Curlscape — Google Gemini API Pricing Guide 2026', url: 'https://curlscape.com/blog/google-gemini-api-pricing-guide-2026' }
+    },
+    context: {
+      tokens: 1000000, maxOutput: 65000,
+      display: '1,000,000 tokens',
+      note: 'Every Gemini model, including the cheapest Flash-Lite tier, ships a 1M window — the only provider in this comparison offering it on its entire lineup.',
+      source: { name: 'Curlscape — Google Gemini API Pricing Guide 2026', url: 'https://curlscape.com/blog/google-gemini-api-pricing-guide-2026' }
+    },
+    benchmark: {
+      score: 48, effort: 'Preview / standard reasoning',
+      display: '48',
+      note: 'Scored on Artificial Analysis Intelligence Index v4.1.1; described as "well above average" for its price tier.',
+      source: { name: 'Artificial Analysis — Gemini 3.1 Pro Preview model page', url: 'https://artificialanalysis.ai/models/gemini-3-1-pro-preview' }
+    },
+    freeTier: {
+      display: 'Flash & Flash-Lite are free within rate limits; Pro is not',
+      note: 'As of April 1, 2026, Pro-tier models were removed from the Gemini API free tier — only Flash and Flash-Lite retain free access with reduced quotas.',
+      score: 55, isEstimate: true,
+      source: { name: 'MetaCTO — The True Cost of Google Gemini', url: 'https://www.metacto.com/blogs/the-true-cost-of-google-gemini-a-guide-to-api-pricing-and-integration' }
+    }
+  },
+  {
+    id: 'mistral',
+    name: 'Mistral AI',
+    model: 'Mistral Large 3',
+    color: '#fa5f36',
+    price: {
+      inputRaw: 0.50, outputRaw: 1.50,
+      display: '$0.50 in / $1.50 out',
+      note: 'A 75% cut from the prior Large 2 generation ($2.00/$6.00). Verified against Mistral\u2019s own model card, not a third-party aggregator.',
+      source: { name: 'Mistral Docs — Mistral Large 3 model card', url: 'https://docs.mistral.ai/models/model-cards/mistral-large-3-25-12' }
+    },
+    context: {
+      tokens: 256000, maxOutput: null,
+      display: '256,000 tokens',
+      note: 'Smallest context window of the four — well behind the 1M-token tier now standard among the other three providers.',
+      source: { name: 'Mistral Docs — Mistral Large 3 model card', url: 'https://docs.mistral.ai/models/model-cards/mistral-large-3-25-12' }
+    },
+    benchmark: {
+      score: 16, effort: 'Non-reasoning (open-weight)',
+      display: '16',
+      note: 'Scored "below average" on this index versus other open-weight non-reasoning models of similar size (category median: 18). Large 3 is a non-reasoning model, which this particular index weights heavily toward reasoning-style evals — see research notes for why this is not a clean apples-to-apples reading.',
+      source: { name: 'Artificial Analysis — Mistral Large 3 model page', url: 'https://artificialanalysis.ai/models/mistral-large-3' }
+    },
+    freeTier: {
+      display: 'Free experimentation tier on La Plateforme',
+      note: 'Rate-limited free tier intended for prototyping and evaluation, not production traffic.',
+      score: 45, isEstimate: true,
+      source: { name: 'CostBench — Mistral AI API pricing profile', url: 'https://costbench.com/software/llm-api-providers/mistral-ai/' }
+    }
+  }
+];
+
+const CRITERIA = [
+  { key:'price', label:'Price per MTok', icon:'💰', desc:'Lower blended cost (3:1 input:output ratio) scores higher.', defaultWeight:30 },
+  { key:'context', label:'Context window', icon:'📏', desc:'Bigger context window scores higher.', defaultWeight:20 },
+  { key:'benchmark', label:'Benchmark performance', icon:'🧠', desc:'Higher Artificial Analysis Intelligence Index score wins.', defaultWeight:30 },
+  { key:'freeTier', label:'Free tier generosity', icon:'🎁', desc:'How usable the provider is before you spend a cent (editorial estimate — see flag).', defaultWeight:20 }
+];
+
+const PRESETS = {
+  cheapest:  { price:60, context:5,  benchmark:15, freeTier:20 },
+  smartest:  { price:5,  context:15, benchmark:70, freeTier:10 },
+  balanced:  { price:25, context:25, benchmark:25, freeTier:25 },
+  reset:     { price:30, context:20, benchmark:30, freeTier:20 }
+};
+
+let weights = { ...PRESETS.reset };
+
+/* ---------------- Normalization ---------------- */
+function blendedPrice(p){ return (3*p.price.inputRaw + p.price.outputRaw) / 4; }
+
+function normalize(){
+  const prices = PROVIDERS.map(blendedPrice);
+  const contexts = PROVIDERS.map(p=>p.context.tokens);
+  const benches = PROVIDERS.map(p=>p.benchmark.score);
+  const frees = PROVIDERS.map(p=>p.freeTier.score);
+
+  const minMax = arr => ({min:Math.min(...arr), max:Math.max(...arr)});
+  const pm = minMax(prices), cm = minMax(contexts), bm = minMax(benches), fm = minMax(frees);
+
+  return PROVIDERS.map((p,i)=>{
+    const priceNorm = pm.max===pm.min ? 100 : ((pm.max - prices[i]) / (pm.max - pm.min)) * 100; // lower price = better
+    const contextNorm = cm.max===cm.min ? 100 : ((contexts[i] - cm.min) / (cm.max - cm.min)) * 100;
+    const benchNorm = bm.max===bm.min ? 100 : ((benches[i] - bm.min) / (bm.max - bm.min)) * 100;
+    const freeNorm = fm.max===fm.min ? 100 : ((frees[i] - fm.min) / (fm.max - fm.min)) * 100;
+    return { provider:p, norm:{ price:priceNorm, context:contextNorm, benchmark:benchNorm, freeTier:freeNorm } };
+  });
+}
+
+function computeScores(){
+  const normed = normalize();
+  const totalWeight = CRITERIA.reduce((s,c)=>s+weights[c.key],0);
+  return normed.map(n=>{
+    let score = 0;
+    if(totalWeight > 0){
+      CRITERIA.forEach(c=>{ score += (weights[c.key]/totalWeight) * n.norm[c.key]; });
+    }
+    return { ...n, score: totalWeight>0 ? score : 0 };
+  }).sort((a,b)=>b.score - a.score);
+}
+
+/* ---------------- Rendering ---------------- */
+function fmtTokens(n){
+  if(n>=1000000) return (n/1000000).toFixed(n%1000000===0?0:1)+'M';
+  return (n/1000).toFixed(0)+'K';
+}
+
+function renderWeightGrid(){
+  const grid = document.getElementById('weightGrid');
+  grid.innerHTML = CRITERIA.map(c=>`
+    <div class="weight-item">
+      <div class="weight-label-row">
+        <div class="weight-label"><span class="weight-icon">${c.icon}</span>${c.label}</div>
+        <div class="weight-value" id="val-${c.key}">${weights[c.key]}</div>
+      </div>
+      <input type="range" min="0" max="100" step="5" value="${weights[c.key]}" id="slider-${c.key}" data-key="${c.key}">
+      <div class="weight-desc">${c.desc}</div>
+    </div>
+  `).join('');
+
+  CRITERIA.forEach(c=>{
+    const el = document.getElementById(`slider-${c.key}`);
+    updateSliderFill(el);
+    el.addEventListener('input', e=>{
+      weights[c.key] = parseInt(e.target.value,10);
+      document.getElementById(`val-${c.key}`).textContent = weights[c.key];
+      updateSliderFill(el);
+      renderAll();
+    });
+  });
+}
+
+function updateSliderFill(el){
+  el.style.setProperty('--fill', el.value+'%');
+}
+
+function renderWeightTotal(){
+  const total = CRITERIA.reduce((s,c)=>s+weights[c.key],0);
+  const el = document.getElementById('weightTotal');
+  if(total===0){
+    el.textContent = 'Total weight: 0 — set at least one slider above zero to rank';
+    el.classList.remove('balanced');
+  } else {
+    el.textContent = `Total weight: ${total} (weights are auto-normalized against each other)`;
+    el.classList.toggle('balanced', true);
+  }
+}
+
+function renderRanking(){
+  const output = document.getElementById('rankingOutput');
+  const hint = document.getElementById('rankingHint');
+  const totalWeight = CRITERIA.reduce((s,c)=>s+weights[c.key],0);
+
+  if(totalWeight === 0){
+    hint.textContent = '';
+    output.innerHTML = `
+      <div class="empty-state">
+        <div class="big">🎚️</div>
+        <div><b>No criteria weighted.</b></div>
+        <div style="margin-top:6px;font-size:13px;">Move at least one slider above zero to see a ranked result.</div>
+      </div>`;
+    return;
+  }
+
+  const ranked = computeScores();
+  hint.textContent = `Ranked by your current weights · ${ranked.length} providers compared`;
+
+  output.innerHTML = `<div class="rank-list">` + ranked.map((r,i)=>{
+    const p = r.provider;
+    const initial = p.name.slice(0,2).toUpperCase();
+    return `
+    <div class="rank-card ${i===0?'top':''}">
+      <div class="rank-main">
+        <div class="rank-num">#${i+1}</div>
+        <div class="provider-badge" style="background:${p.color}">${initial}</div>
+        <div class="provider-info">
+          <div class="provider-name">${p.name}</div>
+          <div class="provider-model">${p.model}</div>
+        </div>
+        <div class="score-block">
+          <div class="score-num">${r.score.toFixed(1)}</div>
+          <div class="score-label">match score / 100</div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:${r.score.toFixed(1)}%"></div></div>
+        </div>
+      </div>
+      <div class="criteria-breakdown">
+        <div class="crit-mini">
+          <div class="crit-mini-label">💰 Price</div>
+          <div class="crit-mini-val">${p.price.display}</div>
+          <div class="crit-mini-sub">fit score ${r.norm.price.toFixed(0)}/100</div>
+        </div>
+        <div class="crit-mini">
+          <div class="crit-mini-label">📏 Context</div>
+          <div class="crit-mini-val">${fmtTokens(p.context.tokens)} tokens</div>
+          <div class="crit-mini-sub">fit score ${r.norm.context.toFixed(0)}/100</div>
+        </div>
+        <div class="crit-mini">
+          <div class="crit-mini-label">🧠 Benchmark</div>
+          <div class="crit-mini-val">${p.benchmark.display} (AA Index)</div>
+          <div class="crit-mini-sub">fit score ${r.norm.benchmark.toFixed(0)}/100</div>
+        </div>
+        <div class="crit-mini">
+          <div class="crit-mini-label">🎁 Free tier</div>
+          <div class="crit-mini-val">${p.freeTier.display}</div>
+          <div class="crit-mini-sub">fit score ${r.norm.freeTier.toFixed(0)}/100</div>
+          ${p.freeTier.isEstimate ? '<div class="flag">⚑ editorial estimate</div>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+function renderTable(){
+  const body = document.getElementById('tableBody');
+  body.innerHTML = PROVIDERS.map(p=>`
+    <tr>
+      <td class="provider-cell">${p.name}</td>
+      <td>${p.model}</td>
+      <td>${p.price.display}</td>
+      <td>${fmtTokens(p.context.tokens)}${p.context.maxOutput ? ' <span style="color:var(--text-faint)">('+fmtTokens(p.context.maxOutput)+' max out)</span>' : ''}</td>
+      <td>${p.benchmark.display} <span style="color:var(--text-faint)">(${p.benchmark.effort})</span></td>
+      <td>${p.freeTier.display}${p.freeTier.isEstimate ? ' <span class="est-badge">est. fit score</span>' : ''}</td>
+    </tr>
+  `).join('');
+}
+
+function renderSources(){
+  const body = document.getElementById('sourcesBody');
+  const rows = [];
+  PROVIDERS.forEach(p=>{
+    ['price','context','benchmark','freeTier'].forEach(k=>{
+      const field = p[k];
+      rows.push({
+        provider: p.name,
+        criterion: k,
+        name: field.source.name,
+        url: field.source.url,
+        desc: field.note,
+        isEstimate: !!field.isEstimate
+      });
+    });
+  });
+
+  const grouped = {};
+  rows.forEach(r=>{ (grouped[r.provider] = grouped[r.provider]||[]).push(r); });
+
+  body.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);margin:16px 0 0;">16 data points across 4 providers × 4 criteria. Every price, context-window, and benchmark figure links to an official provider page or Artificial Analysis (an independent, widely-cited third-party model benchmarking service). Fields marked <span class="est-badge" style="margin-left:2px;">est. fit score</span> are editorial normalizations built on top of a sourced fact, not a directly published number.</p>` +
+    Object.keys(grouped).map(prov => `
+      <div class="source-group">
+        <h4>${prov}</h4>
+        ${grouped[prov].map(r=>`
+          <div class="source-item">
+            <div>
+              <div class="source-name">${r.name} ${r.isEstimate ? '<span class="est-badge">estimate basis</span>' : ''}</div>
+              <div class="source-desc">${r.desc}</div>
+            </div>
+            <a class="source-link" href="${r.url}" target="_blank" rel="noopener">View source →</a>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+}
+
+function renderResearch(){
+  const body = document.getElementById('researchBody');
+  body.innerHTML = `
+    <div class="research-note">
+      <h5>Methodology</h5>
+      <p>Each provider is represented by its current mid-tier "value" model rather than its absolute cheapest or most expensive tier, since the audience for this tool is indie developers optimizing cost-vs-performance rather than chasing either extreme: Claude Sonnet 5, GPT-5.6 Terra, Gemini 3.1 Pro, and Mistral Large 3. Prices use a blended 3:1 input:output ratio (matching Artificial Analysis's own convention) so a single "cost" number can be compared fairly across providers with very different input/output pricing spreads. Each of the four raw metrics is then min-max normalized to a 0–100 "fit score" across just these four providers, and combined using your slider weights.</p>
+    </div>
+    <div class="research-note">
+      <span class="conflict-tag">Conflict resolved</span>
+      <h5>OpenAI Terra pricing: launch price vs. reported cut</h5>
+      <p>OpenAI's own GPT-5.6 launch announcement lists Terra at $2.50 input / $15.00 output per million tokens. Several third-party trackers (BenchLM, DevTk) report a 20% cut to roughly $2.00/$12.00 effective July 30, 2026. OpenAI's announcement page does confirm a July 30 price change occurred for Terra and Luna, but the specific post-cut numbers weren't independently verifiable on OpenAI's own primary page at research time, so this tool conservatively uses the officially-announced launch figure and flags the discrepancy in the sources panel rather than trusting an aggregator's number outright.</p>
+    </div>
+    <div class="research-note">
+      <span class="conflict-tag">Conflict resolved</span>
+      <h5>Anthropic Sonnet 5 pricing: introductory vs. standard</h5>
+      <p>Sonnet 5 launched June 30, 2026 at $2/$10 per million tokens as "introductory pricing through August 31, 2026," with a scheduled increase to $3/$15 on September 1. Anthropic's own pricing documentation, most recently updated, states that increase has since been cancelled and $2/$10 is now the standard, ongoing rate — not a temporary promotion. This tool uses $2/$10 as the standing price on that basis.</p>
+    </div>
+    <div class="research-note">
+      <span class="conflict-tag">Caveat, not a conflict</span>
+      <h5>Mistral Large 3's low benchmark score reflects its architecture, not just weaker performance</h5>
+      <p>Mistral Large 3 is a non-reasoning, open-weight model, while the Artificial Analysis Intelligence Index v4.1.1 leans heavily on evaluations (Humanity's Last Exam, GPQA Diamond, CritPt) that reward extended reasoning traces. Reasoning-enabled models from every other provider in this comparison score substantially higher on this particular index almost by construction. Large 3's 256K context window and much lower price may still make it the right pick for high-volume, non-reasoning tasks (classification, extraction, translation) even though its raw Intelligence Index score trails the other three by a wide margin. If benchmark performance matters a lot to your decision, weight that slider accordingly and read this caveat before ruling Mistral out.</p>
+    </div>
+    <div class="research-note">
+      <h5>What's a sourced fact vs. an editorial estimate</h5>
+      <p>Price, context window, and benchmark score for all four providers are lifted directly from official provider documentation or Artificial Analysis's model pages — no numbers were invented or interpolated. "Free tier generosity" fit scores are the one exception: free-tier terms are described qualitatively by each provider (rate limits, eligible models, trial credits) rather than published as a single comparable number, so this tool converts that qualitative reality into a 0–100 estimate for weighting purposes. Every such score is marked with an ⚑ flag in the ranking cards, the data table, and the sources panel — the underlying qualitative description and its source link are always shown alongside it.</p>
+    </div>
+    <div class="research-note">
+      <h5>What this tool does not cover</h5>
+      <p>Rate limits (requests/minute), latency, multimodal support, tool-use/agentic capability, data residency, and enterprise SLAs are not modeled here — they were deliberately excluded during the criteria selection step. If those matter more to your project than price, context, benchmark score, or free-tier access, treat this as one input among several, not a complete procurement decision.</p>
+    </div>
+  `;
+}
+
+function renderAll(){
+  renderWeightTotal();
+  renderRanking();
+}
+
+/* ---------------- Init & interactions ---------------- */
+function initPresetButtons(){
+  document.querySelectorAll('[data-preset]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const preset = btn.getAttribute('data-preset');
+      weights = { ...PRESETS[preset] };
+      CRITERIA.forEach(c=>{
+        const slider = document.getElementById(`slider-${c.key}`);
+        slider.value = weights[c.key];
+        document.getElementById(`val-${c.key}`).textContent = weights[c.key];
+        updateSliderFill(slider);
+      });
+      renderAll();
+    });
+  });
+}
+
+function initCollapsibles(){
+  document.querySelectorAll('[data-toggle]').forEach(head=>{
+    head.addEventListener('click', ()=>{
+      const id = head.getAttribute('data-toggle');
+      document.getElementById(id).classList.toggle('open');
+    });
+  });
+}
+
+function boot(){
+  try{
+    renderWeightGrid();
+    renderWeightTotal();
+    renderRanking();
+    renderTable();
+    renderSources();
+    renderResearch();
+    initPresetButtons();
+    initCollapsibles();
+    document.getElementById('sourcesCollapsible').classList.add('open');
+  }catch(err){
+    document.getElementById('app').innerHTML = `
+      <div class="wrap">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="big">⚠️</div>
+          <div><b>Something went wrong rendering this tool.</b></div>
+          <div style="margin-top:6px;font-size:13px;">${err.message}</div>
+        </div>
+      </div>`;
+    console.error(err);
+  }
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('app').classList.add('ready');
+}
+
+// Simulate a brief, honest loading state (data is bundled, not fetched live)
+setTimeout(boot, 450);
+</script>
+</body>
+</html>
